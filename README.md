@@ -31,6 +31,6 @@ Python 2.7 for Sucuri
 Numba for Sucuri with GPUNode
 
 To install Numba:
-> Install Anaconda.
-> conda install numba
-> conda install cudatoolkit
+> Install Anaconda.<br/>
+> conda install numba<br/>
+> conda install cudatoolkit<br/>
