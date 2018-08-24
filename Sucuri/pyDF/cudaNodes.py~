@@ -1,0 +1,58 @@
+from pydf import *
+import nodes as Nodes
+from numbapro import cuda
+import numpy as np
+
+#<function Name> <total number of inputs> <cuda.jit header> <num Blocks> <num threads> <Number of the input you want back>
+class CudaNode(Node):
+		def __init__(self,f,inputn,header, numBlocks, numThreads, toHost=[]):
+			Node.__init__(self,f,inputn)
+			
+			self.inputn = inputn
+			self.device_array = []
+			self.host_array = []
+			self.header = header
+			self.numBlocks = numBlocks
+			self.numThreads = numThreads
+			self.toHost = toHost #default is empty		
+				
+		def decorate_cudafunc(self):
+			cuda_function = cuda.jit(self.header)(self.f)
+			return cuda_function
+			
+		def send_toDevice(self,args):
+			for i in range(self.inputn):
+				if(np.isscalar(args[i])): #scalar numbers are no to be sent(explicity)
+					self.device_array += [args[i]]
+				else:
+					self.device_array += [cuda.to_device(args[i])]
+				
+		def get_fromDevice(self):
+			if not self.toHost: #if empty, send it all
+				for i in range(self.inputn):
+					self.host_array += [self.device_array[i].copy_to_host()]	
+			elif len(self.toHost)==1: #if its just one return, no need to use an array
+				self.host_array = self.device_array[self.toHost[0]].copy_to_host()
+			else:
+				for i in range(len(self.toHost)):
+					self.host_array += [self.device_array[self.toHost[i]].copy_to_host()]
+		
+		'''def cudaFree(self):
+			for i in range(self.inputn):
+				if not np.isscalar(self.device_array[i]): #scalars are not pointers
+					cuda.memfree(self.device_array[i])
+			#numba.cuda.cudadrv.driver.free() #forces the device memory to the trash'''
+			
+		def run(self, args, workerid, operq):
+			self.f = self.decorate_cudafunc() #decorate here to have no problems with CudaContext
+			
+			#sending / doing function / retrieving
+			self.send_toDevice(args)			
+			self.f[self.numBlocks,self.numThreads]( *self.device_array ) #unpacking			
+			self.get_fromDevice()
+			cuda.close() #close context to free variables
+			
+			opers = self.create_oper(self.host_array, workerid, operq)
+			self.sendops(opers, operq)
+
+		
