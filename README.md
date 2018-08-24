@@ -20,6 +20,17 @@ For more information:<br/>
 </pre>
 
 # Sucuri with GPUNode
-Inside the Sucuri folder, you have the original sucuri examples and the GPU Node implementation inside pyDF folder alongside the Sucuri version from 10-31-2017.
+Inside the Sucuri folder, you have the original sucuri examples and the GPU Node implementation inside pyDF folder alongside the Sucuri version.
 
 Inside the Blackscholes and Convolutional Separable folder, there are examples of how to use the two versions of GPUNode and a version only using the Numba without Sucuri. The Kernels implementations are based on: https://github.com/fernandoc1/Benchmarking-CUDA
+
+Obs: Some versions of Numpy are not working with this version of Sucuri, so you must convert to list before returning to a node like the BlackScholes and Convolutional examples.
+
+## Requirements:
+Python 2.7 for Sucuri
+Numba for Sucuri with GPUNode
+
+To install Numba:
+> Install Anaconda.
+> conda install numba
+> conda install cudatoolkit
